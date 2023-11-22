@@ -3,30 +3,25 @@ run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
   #This will do static analisis of the entire code
-  Lint:
+  static_analis:
     runs-on: ubuntu-latest
     steps:
-      #- run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      #- run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - name: Checkout source code
-        id: checkout
-        uses: actions/checkout@v1
-      - name: Run Linter Detekt
-        #id: Lint-Detect
-        #uses: natinginfo/action-detekt-all@1.20.0
-          run: echo "hello natinginfo/action-detekt-all"
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
   build:
     runs-on: ubuntu-latest
-    needs: [Lint]
+    needs: [static_analis]
     steps:
-        #- name: git clone project
-        - uses: actions/checkout@v1
-        - run: |
+        - name: git clone project
+          uses: actions/checkout@v1
+        - name: test build project
+          run: |
             rm -rf build
             mkdir build 
             cd build
             cmake ../
             make
+        # check run program without '- name'
         - run: |
             pwd
             cd build
