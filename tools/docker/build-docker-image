@@ -1,0 +1,50 @@
+#!/usr/bin/bash
+
+usage()
+{
+  test -n "$1" && echo && echo $*
+  echo "
+  Usage: $(basename $0) [--tag=<img-name>:<some-tag>] [--no-cache] [--quiet] [--force-rm] [--rm]
+  "
+  exit 1
+}
+
+for arg in $*
+do
+    case "_${arg}" in
+        "_--no-cache")
+            act="$act $arg"
+            ;;
+        "_--quiet")
+            act="$act $arg"
+            ;;
+        "_--force-rm")
+            act="$act $arg"
+            ;;
+        "_--rm")
+            act="$act $arg"
+            ;;
+        "_--tag="*)
+            tag=${arg#--tag=}
+            if [ ! -z $tag ]
+            then
+                tag_act="--tag $tag"
+            fi
+            ;;
+        *)
+            usage "Invalid parameter: '$arg'"
+        esac
+done
+
+base_dir=$(dirname $(realpath $0))
+
+include_list="Dockerinclude.clear.top
+              Dockerinclude.nativelib
+              Dockerinclude.optional
+              Dockerinclude.clear.tail"
+
+for inc in ${include_list}
+do
+    echo "$base_dir/$inc"
+done |
+    xargs cat | docker build $act $tag_act -

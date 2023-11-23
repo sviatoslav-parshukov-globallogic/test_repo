@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ -z "${ESP_BUILD_DIR}" ]
+then
+    ESP_BUILD_DIR="build-out/"
+fi
+
+env meson setup --wipe ${ESP_BUILD_DIR} && \
+    meson compile -C ${ESP_BUILD_DIR}

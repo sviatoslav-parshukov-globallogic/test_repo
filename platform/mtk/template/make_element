@@ -1,0 +1,125 @@
+#!/bin/sh
+
+Template=$1;
+srcfile=$2.c;
+srcfile_h=$2.h;
+SCRIPT=`readlink -f "$0"`;
+SCRIPTPATH=`dirname "$SCRIPT"`;
+
+
+if test x"$1" = x ; then
+	echo "$0 Objectname \n";
+	echo "  creates gstobjectname.{c,h} implementing GstObjectname\n";
+	exit 1;
+fi
+
+srcfile="$SCRIPTPATH/src/gstplugin.c"
+srcfile_h="$SCRIPTPATH/src/gstplugin.h"
+mesonfile="$SCRIPTPATH/src/meson.build"
+
+id=$(echo '$Id$' | sed \
+	-e 's/\$I[d]: \([^$]*\)\$/\1/g' \
+	)
+
+TEMPLATE=$(echo $Template | tr a-z A-Z)
+template=$(echo $Template | tr A-Z a-z)
+filename=$(echo $template | tr -d _)
+Template=$(echo $Template | tr -d _)
+template_=$(echo $Template | sed "s/\([a-z]\)\([A-Z]\)/\1_\2/g" | tr A-Z a-z)
+
+mkdir $template_
+
+mkdir $template_/test
+if [ -e $template ]; then
+  cp $SCRIPTPATH/test/test.c $template_/test/test_$template.c
+  echo "executable('test_$template','test_$template.c')" > $template_/test/meson.build
+  cp -n $template_/test/meson.build $template_/test/meson.build
+fi
+
+YEAR=`date "+%Y"`
+if [ -z "$REAL_NAME" ]; then
+  user=`id -u`
+  if [ `which 2>/dev/null getent` ]; then
+    entry=`getent passwd $user`
+  else
+    entry=`grep $user /etc/passwd`
+  fi
+  REAL_NAME=`echo $entry | awk -F":" '{ print $5 }' | awk -F"," '{ print $1 }'`
+fi
+if [ -z "$EMAIL_ADDRESS" ]; then
+  EMAIL_ADDRESS="<user@hostname.org>"
+fi
+
+mkdir $template_/src
+# remember to break up the Id: in the line below
+sed \
+	-e 's/gstplugin\.c/SOURCEFILE/g' \
+	-e "s/gstplugin\.h/gst$filename.h/g" \
+        -e "s/gsttransform\.h/gst$filename.h/g" \
+	-e "s/GstPluginTemplate/Gst$Template/g" \
+	-e "s/gst_plugin_template/gst_$template_/g" \
+	-e "s/gst_type_plugin_template/gst_$template_/g" \
+	-e "s/GST_PLUGIN_TEMPLATE/GST_$TEMPLATE/g" \
+	-e "s/GST_TYPE_PLUGIN_TEMPLATE/GST_TYPE_$TEMPLATE/g" \
+	-e 's/\$I[d]: \([^$]*\)\$/\1/g' \
+	-e 's/SOURCEFILE/gstobject\.c/g' \
+	-e "s%MAKEFILTERVERSION%$id%g" \
+	-e "s/plugin/$template/g" \
+	-e "s/\([^G][^s][^t]\)Plugin/\1$Template/g" \
+	-e "s/YEAR/$YEAR/g" \
+	-e "s/AUTHOR_NAME/$REAL_NAME/g" \
+	-e "s/AUTHOR_EMAIL/<$EMAIL_ADDRESS>/g" \
+	$srcfile >gst$filename.c.tmp && mv gst$filename.c.tmp $template_/src/gst$filename.c
+
+if [ -e $srcfile_h ]; then
+  sed \
+	-e 's/gstplugin\.c/SOURCEFILE/g' \
+	-e "s/GstPluginTemplate/Gst$Template/g" \
+	-e "s/gst_plugin_template/gst_$template_/g" \
+	-e "s/gst_type_plugin_template/gst_$template_/g" \
+	-e "s/GST_PLUGIN_TEMPLATE/GST_$TEMPLATE/g" \
+	-e "s/GST_TYPE_PLUGIN_TEMPLATE/GST_TYPE_$TEMPLATE/g" \
+	-e "s/GST_IS_PLUGIN_TEMPLATE/GST_IS_$TEMPLATE/g" \
+	-e "s/PLUGIN_TEMPLATE/$TEMPLATE/g" \
+	-e 's/\$I[d]: \([^$]*\)\$/\1/g' \
+	-e 's/SOURCEFILE/gstobject\.c/g' \
+	-e "s%MAKEFILTERVERSION%$id%g" \
+	-e "s/plugin/$template/g" \
+	-e "s/\([^G][^s][^t]\)Plugin/\1$Template/g" \
+	-e "s/YEAR/$YEAR/g" \
+	-e "s/AUTHOR_NAME/$REAL_NAME/g" \
+	-e "s/AUTHOR_EMAIL/<$EMAIL_ADDRESS>/g" \
+    $srcfile_h >gst$filename.h.tmp && mv gst$filename.h.tmp $template_/src/gst$filename.h
+fi
+
+if [ -e $mesonfile ]; then
+  sed \
+	-e 's/gstplugint\.c/SOURCEFILE/g' \
+	-e "s/GstPluginTemplate/Gst$Template/g" \
+	-e "s/gst_plugin_template/gst_$template_/g" \
+	-e 's/\$I[d]: \([^$]*\)\$/\1/g' \
+    -e "s/SOURCEFILE/gst$filename.c/g" \
+	-e "s%MAKEFILTERVERSION%$id%g" \
+	-e "s/plugint/$template/g" \
+	-e "s/\([^G][^s][^t]\)Plugin/\1$Template/g" \
+	-e "s/YEAR/$YEAR/g" \
+	-e "s/AUTHOR_NAME/$REAL_NAME/g" \
+	-e "s/AUTHOR_EMAIL/<$EMAIL_ADDRESS>/g" \
+    $mesonfile >$mesonfile.tmp && mv $mesonfile.tmp $template_/src/meson.build
+fi
+
+cp -n $SCRIPTPATH/meson.build $template/meson.build
+
+if ! grep -q $template_ ./meson.build; then
+    sed \
+        -e "s/project('gst-plugin', 'c', version : '1.18.0.1', license : 'LGPL')/#project('gst-plugin', 'c', version : '1.18.0.1', license : 'LGPL')/g" \
+		-e "s/#ADD_HERE/#ADD_HERE\nsubdir('src')\nsubdir('test')/g" \
+        $template/meson.build > $template/meson.build.tmp && mv $template/meson.build.tmp $template/meson.build
+fi
+
+if ! grep -q $template_ ./meson.build; then
+    sed \
+		-e "s/#ADD_HERE/#ADD_HERE\nsubdir('$template_')/g" \
+        ./meson.build > ./meson.build.tmp && mv ./meson.build.tmp ./meson.build
+fi
+

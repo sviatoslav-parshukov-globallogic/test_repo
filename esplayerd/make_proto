@@ -1,0 +1,3 @@
+
+protoc  --grpc_out=grpc/ --plugin=protoc-gen-grpc=/usr/bin/grpc_cpp_plugin esplayerd.proto
+protoc -I../esplayerd/ --cpp_out=grpc/ ../esplayerd/esplayerd.proto

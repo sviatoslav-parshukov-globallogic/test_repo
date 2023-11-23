@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package ESPlayer;
+
+service Server {
+  rpc RegisterClient (google.protobuf.Empty) returns (RegisterClientReply) {}
+
+  rpc ShmNameRequest (MediaType) returns (ShmNameReply) {}
+  rpc ShmReady (Stream) returns (Result) {}
+
+  rpc Play (Stream) returns (Result) {}
+  rpc Pause (Stream) returns (Result) {}
+
+  rpc Finish (google.protobuf.Empty) returns (Result) {}
+}
+
+message RegisterClientReply {
+    int32 ClientID = 1;
+}
+
+message MediaType {
+    string MediaType = 1;
+}
+
+message ShmNameReply {
+    repeated Stream Stream = 1;
+    repeated Result Result = 2;
+}
+
+message Result {
+    int32 Error = 1;
+}
+
+message Stream {
+    string ShmName = 1;
+    int32 PipelineID = 2;
+}
+
+

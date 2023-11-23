@@ -1,0 +1,10 @@
+# Optionally to make debugging easier
+RUN apt install -y \
+    tree \
+    wget \
+    bash-completion \
+    vim \
+    nano \
+    tig \
+    bat \
+    mc

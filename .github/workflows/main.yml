@@ -1,29 +1,83 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-on: [push]
+name: GitHub Actions Build and Test
+run-name: ${{ github.actor }} is building and testing out GitHub Actions
+on:
+  push:
+    branches:
+      - master
 jobs:
-  #This will do static analisis of the entire code
-  static_analis:
-    runs-on: ubuntu-22.04
-    container: ubuntu:22.04
-    steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "test string"
   build:
     runs-on: ubuntu-22.04
-    container: ubuntu:22.04
-    needs: [static_analis]
+    container: 
+      image: ghcr.io/sviatoslav-parshukov-globallogic/test-gst-build:script
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.SECRETS_TOKEN }}
     steps:
-        - name: git clone project
-          uses: actions/checkout@v1
-        - name: test build project
-          run: test/script.sh
-            
-        # check run program without '- name'
-        - run: |
-            pwd
-            cd build
-            ls -la
-            ./test_repo
-    
+      - name: git clone project
+        uses: actions/checkout@v1
+      - name: build project
+        run: tools/scripts/build-es-player
+      - name: Upload Artifact esplayerd
+        uses: actions/upload-artifact@master
+        with:
+          name: esplayerd
+          path: build-out/esplayerd
+      - name: Upload Artifact libesplayer
+        uses: actions/upload-artifact@master
+        with:
+          name: libesplayer
+          path: build-out/libesplayer
+      - name: Upload Artifact meson-private
+        uses: actions/upload-artifact@master
+        with:
+          name: meson-private
+          path: build-out/meson-private
+      - name: Upload Artifact build.ninja
+        uses: actions/upload-artifact@master
+        with:
+          name: build.ninja
+          path: build-out/build.ninja
+      - name: Upload Artifact libgstmtk.so
+        uses: actions/upload-artifact@master
+        with:
+          name: libgstmtk
+          path: build-out/platform/mtk/src/libgstmtk.so
+  test:
+    runs-on: ubuntu-22.04
+    container: 
+      image: ghcr.io/sviatoslav-parshukov-globallogic/test-gst-build:script
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.SECRETS_TOKEN }}
+    needs: [build]
+    steps:
+      - name: git clone project
+        uses: actions/checkout@master
+      - name: Download Artifact esplayerd
+        uses: actions/download-artifact@master
+        with:
+          name: esplayerd
+          path: build-out/esplayerd
+      - name: Download Artifact libesplayer
+        uses: actions/download-artifact@master
+        with:
+          name: libesplayer
+          path: build-out/libesplayer
+      - name: Download Artifact build.ninja
+        uses: actions/download-artifact@master
+        with:
+          name: build.ninja
+          path: build-out
+      - name: Download Artifact meson-private
+        uses: actions/download-artifact@master
+        with:
+          name: meson-private
+          path: build-out/meson-private
+      - name: Download Artifact libgstmtk.so
+        uses: actions/download-artifact@master
+        with:
+          name: libgstmtk
+          path: build-out/platform/mtk/src/libgstmtk.so
+      - name: test-mtk
+        run: tools/scripts/test-mtk
+  

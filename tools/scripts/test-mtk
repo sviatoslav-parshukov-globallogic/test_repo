@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -z "${ESP_BUILD_DIR}" ]
+then
+    ESP_BUILD_DIR="build-out/"
+fi
+
+meson test -C ${ESP_BUILD_DIR} 
