@@ -1,26 +1,36 @@
 name: GitHub Actions Demo
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-on: [push]
+on:
+  push:
+    branches:
+      - master
 jobs:
   #This will do static analisis of the entire code
   static_analis:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    container: ubuntu:22.04
     steps:
+      - run: uname -a
+      - run: ps
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "test string"
+      - run: cat /etc/os-release
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    container: ubuntu:22.04
     needs: [static_analis]
     steps:
         - name: git clone project
           uses: actions/checkout@v1
         - name: test build project
-          run: |
-            rm -rf build
-            mkdir build 
-            cd build
-            cmake ../
-            make
+          run: test/script.sh
+            #|
+            #rm -rf build
+            #mkdir build 
+            #cd build
+            #cmake ../
+            #make
         # check run program without '- name'
         - run: |
             pwd
