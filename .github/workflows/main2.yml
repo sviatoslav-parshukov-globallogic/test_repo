@@ -1,0 +1,24 @@
+name: GitHub Actions Demo 2
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on:
+  push:
+    branches:
+      - ci_cd_test
+jobs:
+  #This will do static analisis of the entire code
+  static_analis:
+    runs-on: ubuntu-22.04
+    container: ubuntu:22.04
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: cat /etc/os-release
+  build:
+    runs-on: ubuntu-22.04
+    container: ubuntu:22.04
+    needs: [static_analis]
+    steps:
+        - name: git clone project
+          uses: actions/checkout@v1
+        - name: test ci/cd script
+          run: ci_cd_scripts/ci_cd_test.sh
